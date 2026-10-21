@@ -97,6 +97,17 @@ class FunctionDeclaration(ASTNode):
         return f"FunctionDeclaration({self.parameters}, body={self.body}, impure={self.impure})"
 
 
+class UnparsedBody(ASTNode):
+    """Function body tokens, parsed the first time the function is called."""
+
+    def __init__(self, tokens: list):
+        self.tokens = tokens
+        self.parsed: ASTNode | None = None
+
+    def __str__(self):
+        return f"UnparsedBody({''.join(str(t.value) for t in self.tokens)!r})"
+
+
 class MatchCase(ASTNode):
     def __init__(self, condition: ASTNode, expr: ASTNode):
         self.condition = condition

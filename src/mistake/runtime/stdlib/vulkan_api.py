@@ -1,14 +1,14 @@
-from typing import List, Tuple
+import os
+from copy import deepcopy
+
+import mistake.runtime.stdlib.std_funcs as std
 from mistake.runtime.runtime_types import (
+    BuiltinFunction,
+    Function,
     MLType,
     RuntimeListType,
-    BuiltinFunction,
     RuntimeUnit,
-    Function,
 )
-import mistake.runtime.stdlib.std_funcs as std
-from copy import deepcopy
-import os
 
 try:
     import kp
@@ -16,7 +16,7 @@ try:
 except ImportError as e:
     raise ImportError(
         "Mistake GPU support requires additional dependencies. Install them with:\n\n"
-        "    pip install mistake-lang[full]\n"
+        "    pip install mistake-lang[vulkan]\n"
     ) from e
 
 
@@ -47,16 +47,16 @@ def new_vulkan_buffer(arg: RuntimeListType, *_):
 
 
 def actually_run_vulkan_shader(
-    threads: Tuple[int, int],
+    threads: tuple[int, int],
     shader_code: str,
     in_buffers: RuntimeListType,
     out_buffers: RuntimeListType,
     device: RuntimeVulkanDevice,
 ):
-    in_buffs: List[RuntimeVulkanBuffer] = in_buffers.continuous()
-    out_buffs: List[RuntimeVulkanBuffer] = out_buffers.continuous()
+    in_buffs: list[RuntimeVulkanBuffer] = in_buffers.continuous()
+    out_buffs: list[RuntimeVulkanBuffer] = out_buffers.continuous()
 
-    def on_finish(result: List[List]):
+    def on_finish(result: list[List]):
         for new, cur in zip(result, out_buffs):
             cur.data = [i for i in new]
 
@@ -66,11 +66,10 @@ def actually_run_vulkan_shader(
 
 
 def run_vulkan_shader(shader_func: Function, *_):
-    print(shader_func.body.to_string())
-    print(shader_func.raw_body)
-    print(shader_func.to_string())
-    code = shader_func.body[1:-4]
-    code = "".join(i.value for i in code)
+    code = shader_func.raw_body
+    # Strip the Mistake block wrapping the GLSL source, if present
+    if code.startswith("open") and code.endswith("close"):
+        code = code[len("open") : -len("close")].strip()
 
     return BuiltinFunction(
         lambda device, *_: BuiltinFunction(
@@ -125,10 +124,10 @@ def compile_source(shader_code):
 
 
 def kompute(
-    threads: Tuple[int, int],
+    threads: tuple[int, int],
     shader,
-    raw_in: List[RuntimeVulkanBuffer],
-    raw_out: List[RuntimeVulkanBuffer],
+    raw_in: list[RuntimeVulkanBuffer],
+    raw_out: list[RuntimeVulkanBuffer],
     manager: RuntimeVulkanDevice,
     finished_callback=None,
 ):
@@ -156,7 +155,6 @@ def kompute(
 
     algo = mgr.algorithm(params, spirv, workgroup)
 
-    # 4. Run operation synchronously using sequence
     (
         mgr.sequence()
         .record(kp.OpTensorSyncDevice(params))
@@ -182,13 +180,13 @@ if __name__ == "__main__":
     # files). This shader shows some of the main components including constants, buffers, etc
     shader = """
         #version 460
-    
+
         layout(local_size_x = 1) in;
-        
+
         layout(set = 0, binding = 0) buffer Data {
             uint data[];
         } buf;
-        
+
         void main() {
             uint idx = gl_GlobalInvocationID.x;
             buf.data[idx] *= 26;
@@ -207,6 +205,9 @@ if __name__ == "__main__":
 vulkan_std_funcs = {
     # VULKAN
     "🔥+32": np.uint32,
+    "🔥i32": np.int32,
+    "🔥f32": np.float32,
+    "🔥d32": np.double,
     "🔥[!]": BuiltinFunction(lambda *args: new_vulkan_buffer(*args)),
     "🔥🔥": RuntimeVulkanDevice(),
     "🔥🔥()": BuiltinFunction(lambda *args: run_vulkan_shader(*args)),

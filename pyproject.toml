@@ -4,57 +4,33 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mistake-lang"
-version = "0.1.17"
+version = "0.2.1"
 description = "A Mistake"
 readme = "README.md"
 authors = [
     {name = "Elliot", email = "captainexpo@gmail.com"}
 ]
 license = {text = "MIT"}
-requires-python = ">=3.9"
+requires-python = ">=3.14"
 
 dependencies = [
-    "annotated-types==0.7.0",
-    "anyio==4.8.0",
-    "build==1.2.2.post1",
-    "certifi==2024.12.14",
-    "cffi==1.17.1",
-    "charset-normalizer==3.4.1",
-    "future==1.0.0",
-    "gevent==24.11.1",
-    "greenlet==3.1.1",
-    "h11==0.14.0",
-    "h2==4.1.0",
-    "hpack==4.0.0",
-    "httpcore==1.0.7",
-    "httpx==0.28.1",
-    "hyperframe==6.0.1",
-    "requests==2.32.3",
-    "idna==3.10",
-    "inflection==0.5.1",
-    "packaging==24.2",
-    "pyairtable==3.0.1",
-    "pyproject_hooks==1.2.0",
-    "python-dotenv==1.0.1",
-    "setuptools==75.8.0",
-    "sniffio==1.3.1",
-    "typing_extensions==4.12.2",
-    "urllib3==2.3.0",
-    "zope.event==5.0",
-    "zope.interface==7.2"
+    "gevent>=25.4",
+    "pyairtable>=3.0.1",
+    "python-dotenv>=1.0.1",
+    "requests>=2.32.3",
 ]
 
 [project.optional-dependencies]
 vulkan = [
-    "kp==0.9.0", 
-    "vulkan", 
+    "kp==0.9.0",
+    "vulkan",
     "numpy==1.26.4"
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/Captainexpo-1/Mistake-Lang"
-"Source" = "https://github.com/Captainexpo-1/Mistake-Lang"
-"Tracker" = "https://github.com/Captainexpo-1/Mistake-Lang/issues"
+"Homepage" = "https://github.com/captainexpo/Mistake-Lang"
+"Source" = "https://github.com/captainexpo/Mistake-Lang"
+"Tracker" = "https://github.com/captainexpo/Mistake-Lang/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]

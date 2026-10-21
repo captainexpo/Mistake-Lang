@@ -5,20 +5,20 @@ variable &1 is impure function _ returns open
 	?! string The callback has run close end
 
 	comment Run this in 2 more seconds
-	[/] 2 impure function _ returns open 
+	[/] 2 impure function _ returns open
 		comment Send the number 15 through the channel
-		<< [&&] 15 
+		<< [&&] 15
 	close close end
 
 	comment Await a message from the channel
 	variable *1 is >> [&&] end
-	
+
 	comment Print the message
-	?! open + string Result: close open 
-		?? *1 
+	?! open + string Result: close open
+		?? *1
 	close close
 
-close close end 
+close close end
 
 comment Run &1 in 2 seconds
 variable ()1 is [/] 2 &1 end

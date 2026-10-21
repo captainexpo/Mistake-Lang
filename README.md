@@ -274,7 +274,7 @@ All networking functions are impure.
     * Servers are task objects and can also be killed. When they are killed, they stop listening on its port and any running callbacks are killed too.
     * `==>#` binds the server to the port set by its argument. Returns true if successful and false otherwise.
     * `==>?` binds the server to the hostname set by its argument. Returns true if successful and false otherwise.
-    * `==>!` sets the server's callback. 
+    * `==>!` sets the server's callback.
         * For TCP servers, the server callback is called asynchronously with a TCP socket object. Callbacks may be impure.
         * For UDP servers, the server callback is called asynchronously with a string object containing the message content. Callbacks may be impure.
 * `<=#=` creates a TCP socket. `<=?=` creates a UDP socket.
@@ -402,7 +402,7 @@ Open blocks create a new scope. The last expression in an open block is returned
 ```go
 variable 5+6 is open
   variable !1 is 5 end
-  
+
   comment The last thing is returned.
   comment So, the last thing does not have an "end" after it.
   + !1 6
@@ -557,7 +557,7 @@ In Mistake, a "line" is anything that ends in "end". An entire class definition 
 For example:
 
 ```go
-open 
+open
   ?! open [?] unit close end comment Prints 1
   ?! open [?] unit close end comment Still prints 1
   ?! open [?] unit close end comment We're still on line 1!
@@ -575,7 +575,7 @@ comment The below prints "# is 5 :)".
 ?! match # cases
   comment @ is what is being matched on.
   comment Each case statement is evaluated and cast to a boolean.
-  comment Note that everything that is not either "false" or "unit" is truthy.  
+  comment Note that everything that is not either "false" or "unit" is truthy.
 
   case = 5 @ then string # is 5 :) close
   otherwise string # is not 5 :( close
@@ -584,7 +584,7 @@ close end
 
 ### Channels and asynchronous programming
 
-Mistake supports asynchronous programming for building Web Scale:tm: applications. 
+Mistake supports asynchronous programming for building Web Scale:tm: applications.
 Let's create a channel:
 
 ```go
@@ -703,16 +703,16 @@ close end
 Mistake supports building highly scalable web applications with green threading.
 
 TCP Server:
-```go 
+```go
 variable $^&* is <=#=> unit end
 
-variable &&& is function <% returns open 
+variable &&& is function <% returns open
 	variable !*! is function _ returns open
 		<< <% string Hello, World!<br> close end
 		variable >% is >> <% end
 		?! open >"< >% close end
 		match >"< >% cases
-			case = @ string exit close then >|< <% close 
+			case = @ string exit close then >|< <% close
 			otherwise !*! unit close
 		close end
 	close close end
@@ -743,7 +743,7 @@ variable <()> is <=?= unit end
 
 ==>? <()> string 127.0.0.1:8080 close end
 
-<< <()> string Hello World! close end 
+<< <()> string Hello World! close end
 ```
 
 ### Lists
@@ -804,7 +804,7 @@ comment Create an API instance
 {>!<} open [@@@] string AIRTABLE_ACCESS_KEY close close end
 
 comment Create the base object
-variable {{}} is {!} open [@@@] string BASE_ID close close end  
+variable {{}} is {!} open [@@@] string BASE_ID close close end
 
 comment Create the table object
 variable ({0}) is {{}} open [@@@] string TABLE_ID close close end
@@ -824,7 +824,7 @@ comment }
 >{} {1} string Email close string person@hackclub.com close end
 
 comment Create the record object
-variable <{5}> is {! {1} end 
+variable <{5}> is {! {1} end
 
 comment Change the name field to 'Bingus Bongus'
 {< <{5}> string Name close string Bingus Bongus close end
@@ -872,7 +872,7 @@ We can use the source code of functions to do nifty things! In Mistake, function
 ```go
 variable "?" is function _
   blah blah this is invalid syntax blah
-close  comment Note that you still need close 
+close  comment Note that you still need close
 ```
 
 Note that in function blocks, escape sequences don't work.
@@ -915,7 +915,7 @@ Now, let's create two buffers. First, let's fill both lists with some example va
 
 ```go
 comment Create a list for us to turn into a buffer
-variable [0] is [!] unit end 
+variable [0] is [!] unit end
 [<] [0] 1 1 end
 [<] [0] 2 2 end
 [<] [0] 3 3 end
@@ -955,8 +955,8 @@ variable >#[] is 🔥[!] 🔥+32 >[!] end
 Okay, we're almost there. Now let's write a simple GPU program with Advanced Functions:
 
 ```go
-variable 🔥() is function _ returns open 
-  #version 460    
+variable 🔥() is function _ returns open
+  #version 460
 
   layout(local_size_x = 1) in;
 
@@ -994,10 +994,10 @@ Our buffer will now contain the data. Simply use 🔥[<] to read the buffer and 
 
 ```go
 comment Print the result
-[/] 1 function _ returns open 
+[/] 1 function _ returns open
 ?! open 🔥[<] <#[0] close end
 ?! open 🔥[<] <#[1] close end
-?! open 🔥[<] >#[] close  
+?! open 🔥[<] >#[] close
 close close end
 ```
 
@@ -1068,7 +1068,7 @@ close end
 ```
 Every time, the thing in the with is called with the next do and that becomes the value that is then called with the next do (and on and on).
 
-This means that it is equivalent to 
+This means that it is equivalent to
 
 ```go
 +(+(+(5)(?5)))

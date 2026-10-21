@@ -2,7 +2,7 @@ comment Create the Vulkan manager
 variable $$$ is 🔥🔥 end
 
 comment Create a list for us to turn into a buffer
-variable [0] is [!] unit end 
+variable [0] is [!] unit end
 [<] [0] 1 1 end
 [<] [0] 2 2 end
 [<] [0] 3 3 end
@@ -26,10 +26,10 @@ variable >[!] is [!] unit end
 comment Convert the output list into a compute buffer
 variable >#[] is 🔥[!] 🔥+32 >[!] end
 
-comment Define the compute shader function 
-variable 🔥() is function _ returns open 
+comment Define the compute shader function
+variable 🔥() is function _ returns open
 
-#version 460    
+#version 460
 layout(local_size_x = 1) in;
 
 layout(set = 0, binding = 0) buffer buf_in_a { uint in_a[]; };

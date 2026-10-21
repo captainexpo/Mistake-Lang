@@ -1,5 +1,6 @@
 variable <()> is <=?=> unit end
 
+?! string Serving UDP server on 127.0.0.1:8080 close end
 ==>? <()> string 127.0.0.1:8080 close end
 ==>! <()> impure function %1 returns open ?! %1 close close end
 

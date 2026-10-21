@@ -1,16 +1,13 @@
+import sys
 import time
-from typing import (
-    List,
-    Callable,
-)
-
 import warnings
+from collections.abc import Callable
 
-gevent = None 
+gevent = None
 
 
-from mistake import runner  # noqa: E402
-from mistake.parser.ast import (  # noqa: E402
+from mistake import runner
+from mistake.parser.ast import (
     ASTNode,
     Block,
     Boolean,
@@ -24,13 +21,14 @@ from mistake.parser.ast import (  # noqa: E402
     Number,
     String,
     Unit,
+    UnparsedBody,
     VariableAccess,
     VariableDeclaration,
 )
-from mistake.parser.parser import Parser  # noqa: E402
-from mistake.runtime.environment import ContextType, Environment  # noqa: E402
-from mistake.runtime.errors.runtime_errors import RuntimeError  # noqa: E402
-from mistake.runtime.runtime_types import (  # noqa: E402
+from mistake.parser.parser import Parser
+from mistake.runtime.environment import ContextType, Environment
+from mistake.runtime.errors.runtime_errors import RuntimeError
+from mistake.runtime.runtime_types import (
     BuiltinFunction,
     ClassInstance,
     ClassType,
@@ -46,18 +44,13 @@ from mistake.runtime.runtime_types import (  # noqa: E402
     RuntimeUnit,
     get_timestamp,
 )
-
-from mistake.utils import to_decimal_seconds  # noqa: E402
-
-
+from mistake.utils import to_decimal_seconds
 
 
 def is_truthy(value: MLType) -> bool:
     if isinstance(value, RuntimeBoolean):
         return value.value
-    if isinstance(value, RuntimeUnit):
-        return False
-    return True
+    return not isinstance(value, RuntimeUnit)
 
 
 class Interpreter:
@@ -80,8 +73,8 @@ class Interpreter:
     def _reset(self):
         self.global_environment = Environment(None, context_type=ContextType.IMPURE)
         self.current_line = 1
-        self.files: dict[str, List[ASTNode]] = {}
-        self.tasks: List = []
+        self.files: dict[str, list[ASTNode]] = {}
+        self.tasks: list = []
         self.channel_id = 0
         self.current_line = 1
         self.lines_executed = 1
@@ -105,7 +98,7 @@ class Interpreter:
             warnings.simplefilter("ignore", category=monkey.MonkeyPatchWarning) # Remove stupid monkey patch warning
             monkey.patch_all()
 
-            import gevent as _g  # noqa: E402
+            import gevent as _g
             gevent = _g
         if self.tasks:
             # Run tasks asynchronously without blocking the main thread
@@ -163,8 +156,16 @@ class Interpreter:
 
         new_env.add_variable(function.param, param, Lifetime(LifetimeType.INFINITE, 0))
 
-        result = self.visit_node(function.body, new_env)
+        result = self.visit_node(self.get_function_body(function), new_env)
         return result
+
+    def get_function_body(self, function: Function) -> ASTNode:
+        if not isinstance(function.body, UnparsedBody):
+            return function.body
+        # Parsed on first call, then cached on the (shared) declaration body
+        if function.body.parsed is None:
+            function.body.parsed = Block(Parser().parse(function.body.tokens, throw=True))
+        return function.body.parsed
 
     def visit_function_declaration(self, node: FunctionDeclaration, env: Environment):
         params = node.parameters
@@ -185,7 +186,7 @@ class Interpreter:
                 return Function(
                     params[0],
                     body,
-                    is_unparsed=True,
+                    is_unparsed=isinstance(body, UnparsedBody),
                     raw_body=node.raw_body,
                     impure=node.impure,
                     captured_env=cap_env,
@@ -282,9 +283,8 @@ class Interpreter:
         # Lookup the instance in the environment
         instance = self.visit_node(node.obj, env)
 
-        if node.member == '"':
-            if isinstance(instance, Function):
-                return RuntimeString(instance.raw_body)
+        if node.member == '"' and isinstance(instance, Function):
+            return RuntimeString(instance.raw_body)
 
         if not isinstance(instance, ClassInstance):
             raise RuntimeError(f"'{node.obj}' is not a valid instance.")
@@ -369,14 +369,15 @@ class Interpreter:
             raise RuntimeError(f"Line {line} is out of bounds in file {filename}")
 
     def execute(
-        self, ast: List[ASTNode], filename: str = "NO_FILE", standalone=False
-    ) -> List[MLType]:
+        self, ast: list[ASTNode], filename: str = "NO_FILE", standalone=False
+    ) -> list[MLType]:
         self.ast = ast
         self.current_line = 1
         self.lines_executed = 1
         self.files[filename] = ast
+        sys.setrecursionlimit(100000)
 
-        result: List[MLType] = []
+        result: list[MLType] = []
 
         while self.current_line <= len(self.ast):
             node = self.ast[self.current_line - 1]

@@ -3,15 +3,17 @@ import socket
 import time
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, List, Optional
+from typing import TYPE_CHECKING, Any, Callable, List, Optional
 
 import gevent
 
 from mistake.parser.ast import ASTNode
-from mistake.runtime import environment as rte
-from mistake.runtime import interpreter as rt
 from mistake.runtime.errors.runtime_errors import InvalidLifetimeError
 from mistake.utils import to_decimal_seconds
+
+if TYPE_CHECKING:
+    from mistake.runtime import environment as rte
+    from mistake.runtime import interpreter as rt
 
 
 class MLType:

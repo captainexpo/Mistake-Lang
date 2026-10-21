@@ -2,4 +2,4 @@ variable <()> is <=?= unit end
 
 ==>? <()> string 127.0.0.1:8080 close end
 
-<< <()> string Hello World! close end 
+<< <()> string Hello World! close end

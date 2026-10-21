@@ -1,15 +1,19 @@
-import time
-import sys
-import os
-from mistake.tokenizer.lexer import Lexer
-from mistake.parser.parser import Parser
-from mistake.runtime.interpreter import Interpreter
-from mistake.runtime.environment import test
-from typing import Tuple, List, Any
-from dotenv import load_dotenv
+from __future__ import annotations
+
 import argparse
-import mistake.localize as localize
 import json
+import os
+import sys
+import time
+from typing import Any
+
+from dotenv import load_dotenv
+
+from mistake import localize
+from mistake.parser.parser import Parser
+from mistake.runtime.environment import test
+from mistake.runtime.interpreter import Interpreter
+from mistake.tokenizer.lexer import Lexer
 
 ENV_PATH = None
 
@@ -19,8 +23,7 @@ def print_help():
         "Usage: mistake-lang <filename> [--time] [--tokens] [--ast] [--no-exe] [--env <path>] [--vulkan]"
     )
 
-
-def get_args() -> Tuple[str, List[str]]:
+def get_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="MistakeLang Interpreter")
     parser.add_argument("filename", type=str, help="The script file to run")
     parser.add_argument("--time", action="store_true", help="Print timing information")
@@ -55,7 +58,7 @@ def get_args() -> Tuple[str, List[str]]:
 
 def run_script(
     program: str, lex=None, parser=None, rt=None, standalone=True
-) -> Tuple[bool, list | Any]:
+) -> tuple[bool, list | Any]:
     if lex is None:
         lex = Lexer()
     if parser is None:

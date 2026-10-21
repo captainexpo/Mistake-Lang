@@ -1,6 +1,6 @@
 import re
 import time
-import mistake.runtime.interpreter as interpreter
+from typing import TYPE_CHECKING
 
 from mistake.parser.ast import (
     FunctionApplication,
@@ -9,57 +9,59 @@ from mistake.runtime.errors.runtime_errors import (
     RuntimeTypeError,
 )
 from mistake.runtime.runtime_types import (
-    RuntimeBoolean,
-    RuntimeNumber,
-    RuntimeString,
-    RuntimeUnit,
-    RuntimeMutableBox,
-    RuntimeListType,
-    RuntimeRegexResult,
-    RuntimeTask,
-    RuntimeDictType,
     BuiltinFunction,
     Function,
     MLType,
+    RuntimeBoolean,
+    RuntimeDictType,
+    RuntimeListType,
+    RuntimeMutableBox,
+    RuntimeNumber,
+    RuntimeRegexResult,
+    RuntimeString,
+    RuntimeTask,
+    RuntimeUnit,
     convert_type,
     de_runtime_dictify,
     runtime_dictify,
 )
 from mistake.runtime.stdlib.networking import (
     create_TCP_server,
-    create_UDP_server,
     create_TCP_socket,
+    create_UDP_server,
     create_UDP_socket,
 )
-from mistake.utils import from_decimal_seconds, RUNTIME_USE_VULKAN
+from mistake.utils import RUNTIME_USE_VULKAN, from_decimal_seconds
 
 if RUNTIME_USE_VULKAN:
     import mistake.runtime.stdlib.vulkan_api as vstd
 import os
+from typing import Any
 
 from mistake.runtime.stdlib.airtable_api import (
     all_bases,
+    base_schema,
     create_airtable_api_instance,
     create_base,
-    list_table_records,
-    get_record,
-    create_record,
-    update_record,
-    delete_record,
-    new_record,
-    base_schema,
     create_new_field,
+    create_record,
+    delete_record,
+    get_record,
+    list_table_records,
+    new_record,
     update_field,
+    update_record,
 )
 
-from typing import Any
+if TYPE_CHECKING:
+    from mistake.runtime import interpreter
 
 gevent = None
 
 def get_type(val: Any):
     if isinstance(val, bool):
         return RuntimeBoolean(val)
-    if isinstance(val, int) or isinstance(val, float):
+    if isinstance(val, (int, float)):
         return RuntimeNumber(val)
     if isinstance(val, str):
         return RuntimeString(val)
@@ -70,7 +72,7 @@ def get_type(val: Any):
 _STACK = []
 
 
-def try_pop(arg, env, runtime: "interpreter.Interpreter"):
+def try_pop(arg, env, runtime: interpreter.Interpreter):
     if len(_STACK) == 0:
         return RuntimeUnit()
 
@@ -83,7 +85,7 @@ def try_pop(arg, env, runtime: "interpreter.Interpreter"):
     return RuntimeUnit()
 
 
-def get_cur_line(rt: "interpreter.Interpreter"):
+def get_cur_line(rt: interpreter.Interpreter):
     return RuntimeNumber(rt.current_line)
 
 
@@ -117,7 +119,7 @@ def str_to_regex_flags(flag_string):
         'u': re.UNICODE,
         'l': re.LOCALE,
     }
-    
+
     combined_flags = 0
     for char in flag_string.lower():
         if char in flag_map:
@@ -153,7 +155,7 @@ def get_string_from_match(arg: RuntimeRegexResult, *_):
 
 
 def new_task_from_function_app(
-    function: Function, env, runtime: "interpreter.Interpreter", delay: float = 0.0
+    function: Function, env, runtime: interpreter.Interpreter, delay: float = 0.0
 ):
     global gevent
     if gevent is None:
@@ -171,7 +173,7 @@ def new_task_from_function_app(
 
 
 def new_task_from_func(
-    func: callable, runtime: "interpreter.Interpreter", delay: float = 0.0
+    func: callable, runtime: interpreter.Interpreter, delay: float = 0.0
 ):
     global gevent
     if gevent is None:

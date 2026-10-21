@@ -1,22 +1,24 @@
-from typing import List, Set, Dict, Callable, Any
+from __future__ import annotations
+from typing import Optional
 
 from mistake.parser.ast import (
     ASTNode,
-    Boolean,
-    JumpStatement,
-    Unit,
-    VariableAccess,
-    String,
-    Number,
     Block,
-    FunctionDeclaration,
+    Boolean,
+    ClassDefinition,
+    ClassInstancing,
     FunctionApplication,
-    VariableDeclaration,
+    FunctionDeclaration,
+    JumpStatement,
     Match,
     MatchCase,
-    ClassDefinition,
     MemberAccess,
-    ClassInstancing,
+    Number,
+    String,
+    Unit,
+    UnparsedBody,
+    VariableAccess,
+    VariableDeclaration,
 )
 from mistake.parser.errors.parser_errors import ParserError, UnexpectedTokenError
 from mistake.tokenizer.lexer import Lexer
@@ -38,15 +40,15 @@ class Parser:
     def __init__(self):
         self.tokens = []
         self.position = 0
-        self.current_token = None
-        self.errors: List[ParserError] = []
+        self.current_token: Token = None
+        self.errors: list[ParserError] = []
 
     def get_current(self):
         if self.position < len(self.tokens):
             return self.tokens[self.position]
         raise ParserError("Unexpected end of input")
 
-    def parse(self, tokens: List[Token], throw=False) -> ASTNode:
+    def parse(self, tokens: list[Token], throw=False) -> list[ASTNode]:
         self.tokens = tokens
 
         self.position = 0
@@ -58,7 +60,7 @@ class Parser:
         while self.current_token.type not in self.breaking_tokens:
             self.advance()
 
-    def parse_program(self, throw=False) -> List[ASTNode]:
+    def parse_program(self, throw=False) -> list[ASTNode]:
         nodes = []
         while self.current_token.type != TokenType.SYM_EOF:
             try:
@@ -107,7 +109,7 @@ class Parser:
             val = self.parse_jump_statement()
         else:
             val = self.parse_expression()
-        if require_end: 
+        if require_end:
             self.eat(TokenType.KW_END)
         return val
 
@@ -211,7 +213,7 @@ class Parser:
         return Match(expr, cases, otherwise)
 
     def get_unparsed_body(self):
-        body: List[Token] = []
+        body: list[Token] = []
         stack = 1
         while stack > 0:
             if self.current_token.type in opening_tokens:
@@ -224,6 +226,8 @@ class Parser:
             body.append(self.current_token)
             self.advance(allow_ws=True)
 
+        raw_body = "".join(str(t.value) for t in body).strip()
+
         if body[0].type != TokenType.KW_OPEN:
             body = (
                 [Token(TokenType.KW_OPEN, "open")]
@@ -232,7 +236,7 @@ class Parser:
             )
 
         result = body + [Token(TokenType.KW_END, "end"), Token(TokenType.SYM_EOF, "eof")]
-        return result
+        return result, raw_body
 
     def parse_class_definition(self):
         self.eat(TokenType.KW_CLASS)
@@ -243,8 +247,8 @@ class Parser:
         self.eat(TokenType.KW_HAS)
 
         members = {}
-        pmembers: Set[str] = set()
-        body: List[VariableDeclaration] = []
+        pmembers: set[str] = set()
+        body: list[VariableDeclaration] = []
         while self.current_token.type != TokenType.KW_CLOSE:
             fucker = self.parse_variable_declaration()
             body.append(fucker)
@@ -278,39 +282,25 @@ class Parser:
 
         self.eat(TokenType.KW_RETURNS)
 
-        # NOW SHIT HAPPENS
-
-        body = self.get_unparsed_body()
-        
-        np = Parser()
-        parsed = None
-        try:
-            parsed = np.parse(body, throw=True)
-        except (ParserError, UnexpectedTokenError) as e:
-            self.errors.append(e)
-            try:
-                self.advance()
-                self.synchronize()
-            except ParserError:
-                raise UnexpectedTokenError(
-                    f"Unexpected token {self.current_token} at line {self.current_token.line}"
-                )
-            return Unit()
-        parsed_body = parsed[0] if len(body) == 1 else Block(parsed)
+        # Per the spec, the body is only parsed when the function is called
+        body, raw_body = self.get_unparsed_body()
         self.eat(TokenType.KW_CLOSE)
 
-        def get_curried_function(params: List[str], body: ASTNode):
+        def get_curried_function(params: list[str], body: ASTNode):
             if not params:
                 return body
             return FunctionDeclaration(
-                [params[0]], get_curried_function(params[1:], body), impure=impure
+                [params[0]],
+                get_curried_function(params[1:], body),
+                impure=impure,
+                raw_body=raw_body,
             )
 
-        return get_curried_function(parameters, parsed_body)
+        return get_curried_function(parameters, UnparsedBody(body))
 
     def parse_use(self):
         self.eat(TokenType.KW_USE)
-        parameters: List[str] = []
+        parameters: list[str] = []
         while self.current_token.type != TokenType.KW_FROM:
             parameters.append(self.eat(TokenType.SYM_IDENTIFIER).value)
         self.eat(TokenType.KW_FROM)
@@ -319,7 +309,7 @@ class Parser:
         body_expr = self.parse_expression()
 
         callback = FunctionDeclaration(
-            parameters, [Block([body_expr])], impure=True, is_unparsed=False
+            parameters, [Block([body_expr])], impure=True
         )
         return FunctionApplication(call_expr, callback)
 
@@ -331,13 +321,13 @@ class Parser:
             raw.append(self.parse_expression())
         self.eat(TokenType.KW_CLOSE)
 
-        def build_nested_call(exprs: List[ASTNode]):
+        def build_nested_call(exprs: list[ASTNode]):
             if len(exprs) == 1:
                 return exprs[0]
             return FunctionApplication(exprs.pop(-1), build_nested_call(exprs))
 
         res = build_nested_call(raw.copy())
-        
+
         return res
 
     def parse_id_expression(self, allow_function_application=True):
@@ -352,7 +342,7 @@ class Parser:
         return VariableAccess(self.eat(TokenType.SYM_IDENTIFIER).value)
 
     def get_function_application_from_params(
-        self, expr: ASTNode, params: List[ASTNode]
+        self, expr: ASTNode, params: list[ASTNode]
     ):
         for param in params:
             expr = FunctionApplication(expr, param)
@@ -391,7 +381,7 @@ class Parser:
         return JumpStatement(file, line)
 
 
-def get_file_ast(file: str) -> List[ASTNode]:
+def get_file_ast(file: str) -> list[ASTNode]:
     with open(file) as f:
         code = f.read()
         lexer = Lexer()
