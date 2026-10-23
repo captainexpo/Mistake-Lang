@@ -1,5 +1,18 @@
 # The Mistake Language
 
+The Mistake Language (patent not pending) is an esoteric programming language that was designed to be both annoying to program in and, especially, annoying to implement. The majority of the design for the language was done by [@iamawatermelo](https://www.github.com/iamawatermelo), and the implementation of the interpreter was done by me.
+
+The core features of the language include, but are not limited to:
+- A semi-functional paradigm
+- Variables and functions are unable include letters of the alphabet
+- Dynamic typing
+- Classes
+- Vulkan Compute Shader API
+- Airtable database API
+- Keyword localization (keywords are automatically translated into other languages if needed)
+
+Below this section lies comprehensive documentation for the usage, installation, and features of the language.
+
 ## Installation
 
 MistakeLang is registered on PyPI. To install it, run:
@@ -33,7 +46,7 @@ mistake-lang [options] filename
 - `--vulkan`: Enable Vulkan support. (Requires Vulkan SDK)
 - `--unsafe`: Enable unsafe mode.
 - `--end-env`: Print the global environment at the end.
-- `--language LANGUAGE`: Language for localization. Use `lang = "purge"` to purge all localizations.
+- `--language LANGUAGE`: Language for localization. Localizations are automatically generated using the google translate API and thus require access to the internet. Use `--language purge` to purge all localizations.
 - `--env-tree`: Print the environment tree.
 
 ### Example
