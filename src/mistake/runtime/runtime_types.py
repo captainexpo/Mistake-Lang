@@ -321,16 +321,13 @@ def de_runtime_dictify(d: RuntimeDictType):
 
 
 class RuntimeRegexResult(MLType):
-    def __init__(self, groups: List[Any], full_match: re.Match):
-        self.groups = groups
-        self.full_match = full_match
-        if self.full_match is None: 
-            self.full_match = RuntimeUnit()
-        else:
-            self.full_match = RuntimeString(self.full_match.group(0))
+    def __init__(self, match: re.Match):
+        self.groups = match.groups()
+        self.full_match = RuntimeString(match.group(0))
+
     def to_string(self):
         return f"RegexResult({self.groups}, '{self.full_match}')"
-        
+
 class RuntimeChannel(MLType):
     def __init__(
         self,

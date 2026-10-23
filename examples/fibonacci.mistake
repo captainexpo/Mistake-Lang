@@ -1,8 +1,8 @@
-variable #+#() is function ^1 returns open 
+variable #+#() is function ^1 returns open
    match unit cases
       case < ^1 2 then ^1 close
-      otherwise + open #+#() open - ^1 1 close close open #+#() open - ^1 2 close close close   
-   close 
+      otherwise + open #+#() open - ^1 1 close close open #+#() open - ^1 2 close close close
+   close
 close close end
 
 

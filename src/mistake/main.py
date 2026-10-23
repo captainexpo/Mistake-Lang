@@ -80,7 +80,6 @@ def run_script(
 def get_system_language() -> str:
     return os.getenv("LANG", "en").split(".")[0]
 
-
 def graph_env_relations():
     graph = {}  # {parent: [children]}
     for env in test:
@@ -120,7 +119,7 @@ def main():
         for t, kw in zip(trans, keywords):
             n[t] = lexer.keywords[kw]
 
-        lexer.keywords = n
+        lexer.set_keywords(n)
 
     ENV_PATH = args.env
     if ENV_PATH is not None:

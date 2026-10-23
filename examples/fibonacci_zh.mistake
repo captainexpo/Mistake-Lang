@@ -1,0 +1,13 @@
+评论 This is the fibonacci example translated to Mandarin Chinese.
+评论 The translation's not totally accurate, but it demonstrates the concept well
+评论 In order for this to be run, `--language zh` needs to be passed to `mistake-lang`
+
+变量 #+#() 是 功能 ^1 回报 打开
+   匹配 单位 _案例
+      案例 < ^1 2 然后 ^1 关闭
+      否则 + 打开 #+#() 打开 - ^1 1 关闭 关闭 打开 #+#() 打开 - ^1 2 关闭 关闭 关闭
+   关闭
+关闭 关闭 结束
+
+
+?! 打开 #+#() 19 关闭 结束

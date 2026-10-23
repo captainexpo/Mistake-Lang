@@ -126,19 +126,26 @@ class Interpreter:
                 function, MLCallable
             ):
                 raise RuntimeError(
-                    f"Called {node.called} is not a function, but a {type(function)}"
+                    f"Called {node.called} is not a function, but a {type(function)}",
+                    node.called
                 )
             else:
                 is_builtin = True
 
         if function.impure and env.context_type == ContextType.PURE:
             raise RuntimeError(
-                f"Function {function} is impure and cannot be called in a pure context"
+                f"Function {function} is impure and cannot be called in a pure context",
+                node,
             )
 
         if is_builtin:
-            result = function(param, env, self)
+            try:
+                result = function(param, env, self)
+            except RuntimeError as e:
+                raise RuntimeError(e.message, node)
             return result
+
+
 
         new_env = Environment(
             env,
@@ -244,7 +251,7 @@ class Interpreter:
         if node.parent:
             parent_class = env.get_variable(node.parent, line=self.lines_executed)
             if not isinstance(parent_class, ClassType):
-                raise RuntimeError(f"'{node.parent}' is not a valid class.")
+                raise RuntimeError(f"'{node.parent}' is not a valid class.", node)
 
             members = {name: value for name, value in parent_class.members.items()}
             pmembers = parent_class.public_members
@@ -261,7 +268,7 @@ class Interpreter:
         # Lookup the class in the environment
         class_type = env.get_variable(node.name, line=self.lines_executed)
         if not isinstance(class_type, ClassType):
-            raise RuntimeError(f"'{node.name}' is not a valid class.")
+            raise RuntimeError(f"'{node.name}' is not a valid class.", node)
 
         # Create a new instance with the class fields
         instance_members = {name: value for name, value in class_type.members.items()}
@@ -287,14 +294,15 @@ class Interpreter:
             return RuntimeString(instance.raw_body)
 
         if not isinstance(instance, ClassInstance):
-            raise RuntimeError(f"'{node.obj}' is not a valid instance.")
+            raise RuntimeError(f"'{node.obj}' is not a valid instance.", node)
 
         # Access the field of the instance
         if node.member not in instance.members:
-            raise RuntimeError(f"'{node.member}' is not a valid field of '{node.obj}'.")
+            raise RuntimeError(f"'{node.member}' is not a valid field of '{node.obj}'.", node)
         if node.member not in instance.class_type.public_members:
             raise RuntimeError(
-                f"'{node.member}' is not a public field of '{node.obj}'."
+                f"'{node.member}' is not a public field of '{node.obj}'.",
+                node
             )
 
         return instance.environment.get_variable(node.member, line=self.lines_executed)
@@ -305,7 +313,7 @@ class Interpreter:
         for case in node.cases:
             v = self.visit_node(case.condition, env)
             if not isinstance(v, RuntimeBoolean):
-                raise RuntimeError(f"Match condition must be a boolean, got {v}")
+                raise RuntimeError(f"Match condition must be a boolean, got {v}", case)
             if is_truthy(v):
                 return self.visit_node(case.expr, env)
         return self.visit_node(node.otherwise, env)
@@ -387,10 +395,12 @@ class Interpreter:
                 )
                 self.run_all_tasks()
 
-            except Exception as e:
+            except RuntimeError as e:
                 if self.unsafe_mode and not standalone:
                     raise e
                 if not standalone:
+                    if e.node is not None:
+                        print(f"Error at => {e.node.to_string()}")
                     print(f"Error at line {self.current_line}, {e}")
                 return result + [e]
             self.current_line += 1

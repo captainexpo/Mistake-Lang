@@ -33,37 +33,37 @@ close close end
 comment HTTP parser class
 variable [#] is class has
     comment Current regex to be applied
-    variable #?# is ! [#?#] end
-    
+    variable ?##? is ! [#?#] end
+
     comment Current feed state
-    variable >#> is ! unit end
-    
+    variable >#> is ! string  close end
+
     comment Current HTTP verb
     variable #?# is ! unit end
-    
+
     comment Current HTTP path
     variable /##/## is ! unit end
-    
+
     comment Current headers
     variable ##:## is [!] unit end
-    
+
     comment Feed the HTTP parser
     public variable #>>> is impure function ### returns open
         ?! string hello close end
-    
+
         with ###
             comment Append string to parse to the end of feed state
             do + open !? >#> close
-            
+
             comment Save new feed state
             do !< >#>
         close end
-        
+
         comment Then, try match our regex
         variable [???] is with !? >#>  comment With the current feed state...
-            do !? #?#  comment try applying the regex...
+            do !? ?##?  comment try applying the regex...
         close end
-        
+
         comment Did we match anything?
         match -> [???] cases
             case = 0 @ then open
@@ -74,9 +74,9 @@ variable [#] is class has
                 comment Ok, we matched something!
                 comment Get the match object
                 variable ??? is [>] [???] 1 end
-                
+
                 comment Figure out which part of the parser were at
-                match !? #?# cases
+                match !? ?##? cases
                     comment We were parsing the verb
                     case = [#?#] @ then open
                         ?! string Got HTTP verb! close end
@@ -84,16 +84,16 @@ variable [#] is class has
                         with />?/ ??? 1
                             do !< #?#
                         close end
-                        
+
                         comment Set the new feed state
                         with />?/ ??? 2
                             do !< >#>
                         close end
-                        
+
                         comment Set the new regex to use
-                        !< #?# [/##/##]
+                        !< ?##? [/##/##]
                     close close
-                    
+
                     otherwise ?! string uh oh! close close
                 close
             close close
@@ -101,11 +101,11 @@ variable [#] is class has
     close close end
 close end
 
-?! string im killing myself close end
+?! string uh oh close end
 
 variable # is new [#] end
 
-?! string im killing myself close end
+?! string uh uh close end
 
 with member #>>> of # do ?! close end
 

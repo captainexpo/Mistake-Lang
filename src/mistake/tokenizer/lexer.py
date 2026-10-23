@@ -40,7 +40,7 @@ keywords_en: dict[str, TokenType] = {
     "from": TokenType.KW_FROM,
     "with": TokenType.KW_WITH,
     "comment": TokenType.EX_COMMENT,
-    "string": TokenType.EX_STRING,    
+    "string": TokenType.EX_STRING,
 }
 class Lexer:
     def __init__(self, keywords = keywords_en):
@@ -51,6 +51,11 @@ class Lexer:
         self.current_position = 0
         self.current_line = 1
         self.keywords = keywords
+        self.Q_keywords = {v:k for k, v in self.keywords.items()}
+
+    def set_keywords(self, keywords):
+        self.keywords = keywords
+        self.Q_keywords = {v:k for k, v in self.keywords.items()}
 
     def add_token(self, token: Token):
         if token.type == TokenType.SYM_WHITESPACE and token.value == "":
@@ -62,7 +67,7 @@ class Lexer:
         for c in s:
             if not c.isdigit():
                 contains_non_number = True
-            if is_latin_alph(c):
+            if c.isalpha():
                 return False
         return contains_non_number
 
@@ -104,13 +109,15 @@ class Lexer:
         start = self.current_position
         while (
             self.current_position < len(self.code)
-            and self.code[self.current_position : self.current_position + 5] != "close"
+            and self.code[self.current_position :].split(" ")[0] != self.Q_keywords[TokenType.KW_CLOSE]
         ):
             self.current_position += 1
 
-        return html.unescape(self.code[start + 1 : self.current_position - 1]).replace(
+
+        s = html.unescape(self.code[start + 1 : self.current_position - 1]).replace(
             "<br>", "\n"
         )
+        return s
 
     def tokenize(self, code: str) -> List[Token]:
         self.code = code
@@ -145,7 +152,7 @@ class Lexer:
                 self.add_token(Token(token_type, t, self.current_line))
 
         self.add_token(Token(TokenType.SYM_EOF, "EOF", self.current_line))
-        
+
         # remove all prefix whitespace tokens
         while self.tokens[0].type == TokenType.SYM_WHITESPACE:
             self.tokens.pop(0)

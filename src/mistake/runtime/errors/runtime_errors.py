@@ -1,6 +1,11 @@
-class RuntimeError(Exception):
-    pass
+from mistake.parser.ast import ASTNode
 
+
+class RuntimeError(Exception):
+    def __init__(self, message, node: ASTNode | None = None):
+        self.message = message
+        self.node = node
+        super().__init__(self.message)
 
 class VariableNotFoundError(RuntimeError):
     pass

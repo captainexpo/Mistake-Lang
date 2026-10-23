@@ -97,16 +97,16 @@ def write_to_mut_box(box: RuntimeMutableBox, *_):
 
 def get_length(arg: MLType, *_):
     match arg:
-        case RuntimeString(value):
+        case RuntimeString(value=value):
             # Length of string in bytes
             return RuntimeNumber(len(value.encode()))
-        case RuntimeListType(value):
+        case RuntimeListType(list=value):
             return RuntimeNumber(len(value))
-        case RuntimeNumber(value):
-            return len(str(value))
-        case RuntimeRegexResult(value):
-            return RuntimeNumber(len(value.groups))
-        case RuntimeTask(_, start_time):
+        case RuntimeNumber(value=value):
+            return RuntimeNumber(len(str(value)))
+        case RuntimeRegexResult(groups=groups):
+            return RuntimeNumber(len(groups))
+        case RuntimeTask(start_time=start_time):
             return RuntimeNumber(time.time() - start_time)
         case _:
             return RuntimeNumber(0)
@@ -136,9 +136,8 @@ def create_regex_func(arg: RuntimeString, *_):
         flags = vals[-1]
         comp = re.compile(pattern, str_to_regex_flags(flags))
         return BuiltinFunction(
-            lambda arg, *_: RuntimeRegexResult(
-                comp.findall(arg.value),
-                comp.match(arg.value)
+            lambda arg, *_: RuntimeListType(
+                [RuntimeRegexResult(m) for m in comp.finditer(arg.value)]
             ),
             imp=False,
         )
@@ -147,11 +146,17 @@ def create_regex_func(arg: RuntimeString, *_):
 
 
 def get_group_from_match(arg: RuntimeRegexResult, *_):
-    return BuiltinFunction(lambda x, *_: RuntimeString(arg.group[int(x.value) - 1]), imp=False)
+    def get_group(x, *_):
+        idx = int(x.value)
+        if idx < 1 or idx > len(arg.groups) or arg.groups[idx - 1] is None:
+            return RuntimeUnit()
+        return RuntimeString(arg.groups[idx - 1])
+
+    return BuiltinFunction(get_group, imp=False)
 
 
 def get_string_from_match(arg: RuntimeRegexResult, *_):
-    return RuntimeString(arg.full_match)
+    return arg.full_match
 
 
 def new_task_from_function_app(
@@ -200,12 +205,20 @@ def assert_true(arg: MLType, *_):
         raise AssertionError("Assertion failed")
     return RuntimeUnit()
 
+# add that allows concatenation of strings with other values
+def generic_add(arg, x):
+    if isinstance(arg, RuntimeString) or isinstance(x, RuntimeString):
+        return RuntimeString(arg.to_string() + x.to_string())
+    if isinstance(arg, RuntimeUnit) or isinstance(x, RuntimeUnit):
+        raise RuntimeTypeError("cannot add null to value")
+    return get_type(arg.value + x.value)
+
 
 std_funcs = {
     "?!": BuiltinFunction(lambda arg, env, runtime: runtime.print(arg)),
     "+": BuiltinFunction(
         lambda arg, *_: BuiltinFunction(
-            lambda x, *_: get_type(arg.value + x.value), imp=False
+            lambda x, *_: generic_add(arg, x), imp=False
         ),
         imp=False,
     ),
