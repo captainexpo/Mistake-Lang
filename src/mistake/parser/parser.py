@@ -309,7 +309,7 @@ class Parser:
         body_expr = self.parse_expression()
 
         callback = FunctionDeclaration(
-            parameters, [Block([body_expr])], impure=True
+            parameters, Block([body_expr]), impure=True
         )
         return FunctionApplication(call_expr, callback)
 

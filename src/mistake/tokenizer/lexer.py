@@ -107,11 +107,11 @@ class Lexer:
 
     def get_string(self) -> str:
         start = self.current_position
-        while (
-            self.current_position < len(self.code)
-            and self.code[self.current_position :].split(" ")[0] != self.Q_keywords[TokenType.KW_CLOSE]
-        ):
-            self.current_position += 1
+
+        close_word = re.escape(self.Q_keywords[TokenType.KW_CLOSE])
+        end = re.compile(rf"(?<=\s){close_word}(?=\s|$)").search(self.code, start)
+        self.current_position = end.start() if end else len(self.code)
+        self.current_line += self.code.count("\n", start, self.current_position)
 
 
         s = html.unescape(self.code[start + 1 : self.current_position - 1]).replace(

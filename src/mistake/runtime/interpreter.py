@@ -309,6 +309,8 @@ class Interpreter:
 
     def visit_match(self, node: Match, env: Environment):
         expr = self.visit_node(node.expr, env)
+
+        env = Environment(env, context_type=env.context_type)
         env.add_variable("@", expr, Lifetime(LifetimeType.INFINITE, 0))
         for case in node.cases:
             v = self.visit_node(case.condition, env)
